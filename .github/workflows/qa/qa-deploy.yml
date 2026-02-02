@@ -1,0 +1,13 @@
+
+name: Deploy to QA (Validate Only)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-qa:
+    runs-on: ubuntu-latest
+    environment: qa
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Validating QA configuration"

@@ -1,0 +1,15 @@
+
+name: Deploy to PROD (Approval Required)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+      url: https://yourcompany.veevavault.com
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Deploying to PROD after approval"
