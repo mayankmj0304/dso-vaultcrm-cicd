@@ -1,0 +1,52 @@
+name: Deploy Veeva Vault CRM Configurations
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment: qa
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Authenticate to Veeva Vault
+        run: |
+          RESPONSE=$(curl -s -X POST \
+            "$VAULT_URL/api/v23.1/auth" \
+            -d "username=$VAULT_USERNAME&password=$VAULT_PASSWORD")
+
+          SESSION_ID=$(echo $RESPONSE | jq -r '.sessionId')
+          echo "VAULT_SESSION=$SESSION_ID" >> $GITHUB_ENV
+        env:
+          VAULT_URL: ${{ secrets.VAULT_URL }}
+          VAULT_USERNAME: ${{ secrets.VAULT_USERNAME }}
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+
+      - name: Validate VCM Package
+        run: |
+          curl -X POST \
+            "$VAULT_URL/api/v23.1/configuration/migration/validate" \
+            -H "Authorization: $VAULT_SESSION" \
+            -F "file=@vcm/package.xml"
+
+      - name: Deploy VCM Package
+        run: |
+          curl -X POST \
+            "$VAULT_URL/api/v23.1/configuration/migration/deploy" \
+            -H "Authorization: $VAULT_SESSION" \
+            -F "file=@vcm/package.xml"
+
+      - name: Deployment Complete
+        run: echo "Vault CRM deployment completed successfully"
