@@ -29,7 +29,7 @@ jobs:
       - name: Retrieve all Vault objects
         run: |
           curl -s -X GET \
-            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/components" \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/vobjects/product__v" \
             -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
             -o all_objects.json
 
@@ -46,7 +46,7 @@ jobs:
       - name: Retrieve picklists
         run: |
           curl -s -X GET \
-            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/component/picklist" \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/objects/picklists" \
             -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
             -o picklists.json
 
