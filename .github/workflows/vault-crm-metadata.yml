@@ -1,0 +1,46 @@
+name: Retrieve Veeva Vault CRM Metadata
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  retrieve-metadata:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Veeva Vault
+        id: auth
+        run: |
+          response=$(curl -s -X POST \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/auth" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "username=${{ secrets.VAULT_USERNAME }}" \
+            --data-urlencode "password=${{ secrets.VAULT_PASSWORD }}")
+
+          echo "Auth response: $response"
+
+          session_id=$(echo "$response" | jq -r '.sessionId')
+
+          if [ "$session_id" = "null" ] || [ -z "$session_id" ]; then
+            echo "Authentication failed"
+            exit 1
+          fi
+
+          echo "session_id=$session_id" >> $GITHUB_OUTPUT
+
+      - name: Retrieve CRM Object Metadata
+        run: |
+          curl -s -X GET \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/vobjects/${{ secrets.VAULT_OBJECT_NAME }}?loc=true" \
+            -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
+            -H "Accept: application/json" \
+            -o crm_metadata.json
+
+      - name: Upload metadata as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vault-crm-metadata
+          path: crm_metadata.json
