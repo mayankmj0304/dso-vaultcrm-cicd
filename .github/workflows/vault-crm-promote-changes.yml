@@ -1,0 +1,91 @@
+name: Vault CRM Promote Configuration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  promote-crm:
+    runs-on: ubuntu-latest
+
+    steps:
+    # -------------------------
+    # Authenticate to SOURCE
+    # -------------------------
+    - name: Authenticate to SOURCE Vault
+      id: src_auth
+      run: |
+        response=$(curl -s -X POST \
+          "${{ secrets.SRC_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/auth" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          --data-urlencode "username=${{ secrets.SRC_VAULT_USERNAME }}" \
+          --data-urlencode "password=${{ secrets.SRC_VAULT_PASSWORD }}")
+
+        session=$(echo "$response" | jq -r '.sessionId')
+        echo "session=$session" >> $GITHUB_OUTPUT
+
+    # -------------------------
+    # Retrieve CRM Metadata
+    # -------------------------
+    - name: Retrieve CRM Objects
+      run: |
+        mkdir -p export/objects
+        curl -s \
+          "${{ secrets.SRC_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/vobjects" \
+          -H "Authorization: ${{ steps.src_auth.outputs.session }}" \
+          -o export/all_objects.json
+
+        for obj in $(jq -r '.objects[].name' export/all_objects.json); do
+          curl -s \
+            "${{ secrets.SRC_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/vobjects/$obj" \
+            -H "Authorization: ${{ steps.src_auth.outputs.session }}" \
+            -o export/objects/$obj.json
+        done
+
+    - name: Retrieve Picklists
+      run: |
+        curl -s \
+          "${{ secrets.SRC_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/picklists" \
+          -H "Authorization: ${{ steps.src_auth.outputs.session }}" \
+          -o export/picklists.json
+
+    # -------------------------
+    # Package Metadata
+    # -------------------------
+    - name: Package Metadata
+      run: |
+        tar -czf vault-crm-package.tar.gz export/
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: vault-crm-package
+        path: vault-crm-package.tar.gz
+
+    # -------------------------
+    # Authenticate to TARGET
+    # -------------------------
+    - name: Authenticate to TARGET Vault
+      id: tgt_auth
+      run: |
+        response=$(curl -s -X POST \
+          "${{ secrets.TGT_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/auth" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          --data-urlencode "username=${{ secrets.TGT_VAULT_USERNAME }}" \
+          --data-urlencode "password=${{ secrets.TGT_VAULT_PASSWORD }}")
+
+        session=$(echo "$response" | jq -r '.sessionId')
+        echo "session=$session" >> $GITHUB_OUTPUT
+
+    # -------------------------
+    # Trigger Configuration Migration
+    # -------------------------
+    - name: Trigger Vault Configuration Migration
+      run: |
+        curl -X POST \
+          "${{ secrets.TGT_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/configuration/migration" \
+          -H "Authorization: ${{ steps.tgt_auth.outputs.session }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "action": "import",
+            "source": "package",
+            "description": "Automated CRM promotion from DEV"
+          }'
