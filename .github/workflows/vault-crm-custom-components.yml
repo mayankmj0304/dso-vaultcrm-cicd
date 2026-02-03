@@ -1,0 +1,75 @@
+name: Retrieve All Vault CRM Custom Components
+
+on:
+  workflow_dispatch:
+
+jobs:
+  retrieve-crm-components:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Veeva Vault
+        id: auth
+        run: |
+          response=$(curl -s -X POST \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/auth" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "username=${{ secrets.VAULT_USERNAME }}" \
+            --data-urlencode "password=${{ secrets.VAULT_PASSWORD }}")
+
+          session_id=$(echo "$response" | jq -r '.sessionId')
+
+          if [ -z "$session_id" ] || [ "$session_id" = "null" ]; then
+            echo "Authentication failed"
+            exit 1
+          fi
+
+          echo "session_id=$session_id" >> $GITHUB_OUTPUT
+
+      - name: Retrieve all Vault objects
+        run: |
+          curl -s -X GET \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/vobjects" \
+            -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
+            -o all_objects.json
+
+      - name: Retrieve custom object metadata
+        run: |
+          mkdir -p objects
+          for obj in $(jq -r '.objects[].name | select(endswith("__c"))' all_objects.json); do
+            curl -s -X GET \
+              "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/vobjects/$obj?loc=true" \
+              -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
+              -o "objects/$obj.json"
+          done
+
+      - name: Retrieve picklists
+        run: |
+          curl -s -X GET \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/picklists" \
+            -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
+            -o picklists.json
+
+      - name: Retrieve object types
+        run: |
+          curl -s -X GET \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/objecttypes" \
+            -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
+            -o objecttypes.json
+
+      - name: Retrieve lifecycles
+        run: |
+          curl -s -X GET \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/metadata/lifecycles" \
+            -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
+            -o lifecycles.json
+
+      - name: Upload Vault CRM custom components
+        uses: actions/upload-artifact@v4
+        with:
+          name: vault-crm-custom-components
+          path: |
+            objects/
+            picklists.json
+            objecttypes.json
+            lifecycles.json
