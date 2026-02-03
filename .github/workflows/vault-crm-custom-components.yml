@@ -43,12 +43,12 @@ jobs:
               -o "objects/$obj.json"
           done
 
-      - name: Retrieve picklists
+      - name: Retrieve all users
         run: |
           curl -s -X GET \
-            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/objects/picklists" \
+            "${{ secrets.VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/objects/users" \
             -H "Authorization: ${{ steps.auth.outputs.session_id }}" \
-            -o picklists.json
+            -o users.json
 
       - name: Retrieve object types
         run: |
