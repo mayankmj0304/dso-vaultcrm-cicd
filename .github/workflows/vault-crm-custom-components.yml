@@ -70,6 +70,6 @@ jobs:
           name: vault-crm-custom-components
           path: |
             objects/
-            picklists.json
+            users.json
             objecttypes.json
             pagelayouts.json
