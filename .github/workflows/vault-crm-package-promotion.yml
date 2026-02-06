@@ -1,0 +1,91 @@
+name: Vault CRM Package Promotion (SOURCE ORG → TARGET ORG)
+
+on:
+  workflow_dispatch:
+
+jobs:
+# =====================================================
+# EXPORT PACKAGE FROM DEV
+# =====================================================
+  export-dev:
+    name: Export Package from DEV
+    runs-on: ubuntu-latest
+
+    outputs:
+      package-id: ${{ steps.export.outputs.package_id }}
+
+    steps:
+      - name: Authenticate to SOURCE Vault
+        id: src_auth
+        run: |
+          response=$(curl -s -X POST \
+            "${{ secrets.SRC_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/auth" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "username=${{ secrets.SRC_VAULT_USERNAME }}" \
+            --data-urlencode "password=${{ secrets.SRC_VAULT_PASSWORD }}")
+
+          session=$(echo "$response" | jq -r '.sessionId')
+          echo "session=$session" >> $GITHUB_OUTPUT
+
+      - name: Export Configuration Package
+        id: export
+        run: |
+          response=$(curl -s -X POST \
+            "${{ secrets.DEV_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/services/package/export" \
+            -H "Authorization: ${{ steps.src_auth.outputs.session }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "package_name": "CRM_DEV_EXPORT",
+              "description": "Automated CRM export from SOURCE"
+            }')
+
+          package_id=$(echo "$response" | jq -r '.data.package_id')
+          echo "package_id=$package_id" >> $GITHUB_OUTPUT
+
+      - name: Download Exported Package
+        run: |
+          curl -s -L \
+            "${{ secrets.DEV_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/services/package/$PACKAGE_ID/file" \
+            -H "Authorization: ${{ steps.src_auth.outputs.session }}" \
+            -o crm-package.zip
+        env:
+          PACKAGE_ID: ${{ steps.export.outputs.package_id }}
+
+      - name: Upload Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vault-crm-package
+          path: crm-package.zip
+
+# =====================================================
+# IMPORT PACKAGE TO TARGET
+# =====================================================
+  import-sit:
+    name: Import Package to TARGET
+    runs-on: ubuntu-latest
+    needs: export-dev
+    environment: sit
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: vault-crm-package
+
+      - name: Authenticate to SIT Vault
+        id: sit_auth
+        run: |
+          response=$(curl -s -X POST \
+            "${{ secrets.QA_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/auth" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "username=${{ secrets.TGT_VAULT_USERNAME }}" \
+            --data-urlencode "password=${{ secrets.TGT_VAULT_PASSWORD }}")
+
+          session=$(echo "$response" | jq -r '.sessionId')
+          echo "session=$session" >> $GITHUB_OUTPUT
+
+      - name: Import Package to SIT
+        run: |
+          curl -s -X POST \
+            "${{ secrets.TGT_VAULT_URL }}/api/${{ secrets.VAULT_API_VERSION }}/services/package/import" \
+            -H "Authorization: ${{ steps.sit_auth.outputs.session }}" \
+            -F file=@crm-package.zip
