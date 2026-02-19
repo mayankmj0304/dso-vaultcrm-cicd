@@ -29,6 +29,7 @@ jobs:
 
           SESSION_ID=$(echo $RESPONSE | jq -r '.sessionId')
           echo "VAULT_SESSION=$SESSION_ID" >> $GITHUB_ENV
+          echo "VAULT_URL=$VAULT_URL"
         env:
           VAULT_URL: ${{ secrets.VAULT_URL }}
           VAULT_USERNAME: ${{ secrets.VAULT_USERNAME }}
