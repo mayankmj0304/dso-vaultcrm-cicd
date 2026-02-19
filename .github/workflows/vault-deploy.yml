@@ -39,7 +39,7 @@ jobs:
           curl -X POST \
             "$VAULT_URL/api/v23.1/services/package/actions/validate" \
             -H "Authorization: $VAULT_SESSION" \
-            -F "file=@vcm/package.xml"
+            -F "file=@vcm/test-package.vpk"
 
       - name: Deploy VCM Package
         run: |
