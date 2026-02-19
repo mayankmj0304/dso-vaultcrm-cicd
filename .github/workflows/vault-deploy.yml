@@ -34,6 +34,10 @@ jobs:
           VAULT_URL: ${{ secrets.VAULT_URL }}
           VAULT_USERNAME: ${{ secrets.VAULT_USERNAME }}
           VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+          
+      - name: Debug URL
+        run: |
+         echo "VAULT_URL=$VAULT_URL"
 
       - name: Validate VCM Package
         run: |
