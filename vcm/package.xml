@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MigrationPackage xmlns="http://veeva.com/vault/migration">
+
+    <components>
+
+        <!-- ========================= -->
+        <!-- OBJECTS -->
+        <!-- ========================= -->
+
+        <component>
+            <type>Object</type>
+            <name>Call2_vod</name>
+        </component>
+
+        <component>
+            <type>Object</type>
+            <name>Account_vod</name>
+        </component>
+
+        <component>
+            <type>Object</type>
+            <name>Call_Detail_vod</name>
+        </component>
+
+        <!-- ========================= -->
+        <!-- OBJECT FIELDS -->
+        <!-- ========================= -->
+
+        <component>
+            <type>ObjectField</type>
+            <name>Call2_vod.call_type__v</name>
+        </component>
+
+        <component>
+            <type>ObjectField</type>
+            <name>Call2_vod.call_date__v</name>
+        </component>
+
+        <component>
+            <type>ObjectField</type>
+            <name>Call_Detail_vod.product__v</name>
+        </component>
+
+        <!-- ========================= -->
+        <!-- LIFECYCLES -->
+        <!-- ========================= -->
+
+        <component>
+            <type>Lifecycle</type>
+            <name>Call_Lifecycle</name>
+        </component>
+
+        <!-- ========================= -->
+        <!-- WORKFLOWS -->
+        <!-- ========================= -->
+
+        <component>
+            <type>Workflow</type>
+            <name>Call_Approval_Workflow</name>
+        </component>
+
+        <!-- ========================= -->
+        <!-- PAGE CONFIGURATION -->
+        <!-- ========================= -->
+
+        <component>
+            <type>PageLayout</type>
+            <name>Call_Record_Page</name>
+        </component>
+
+        <component>
+            <type>PageLayout</type>
+            <name>Account_Record_Page</name>
+        </component>
+
+        <!-- ========================= -->
+        <!-- PICKLISTS -->
+        <!-- ========================= -->
+
+        <component>
+            <type>Picklist</type>
+            <name>Call_Type</name>
+        </component>
+
+        <!-- ========================= -->
+        <!-- SECURITY -->
+        <!-- ========================= -->
+
+        <component>
+            <type>PermissionSet</type>
+            <name>Sales_Rep_Permissions</name>
+        </component>
+
+        <component>
+            <type>PermissionSet</type>
+            <name>Manager_Permissions</name>
+        </component>
+
+    </components>
+
+</MigrationPackage>
