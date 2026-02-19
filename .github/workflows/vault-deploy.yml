@@ -37,7 +37,7 @@ jobs:
       - name: Validate VCM Package
         run: |
           curl -X POST \
-            "$VAULT_URL/api/v23.1/configuration/migration/validate" \
+            "$VAULT_URL/api/v23.1/services/package/actions/validate" \
             -H "Authorization: $VAULT_SESSION" \
             -F "file=@vcm/package.xml"
 
