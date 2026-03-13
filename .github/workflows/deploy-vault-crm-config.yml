@@ -23,7 +23,7 @@ jobs:
       - name: Authenticate to Veeva Vault
         run: |
           RESPONSE=$(curl -s -X POST \
-            "$VAULT_URL/api/v23.1/auth" \
+            "$VAULT_URL/api/v26.1/auth" \
             -d "username=$VAULT_USERNAME&password=$VAULT_PASSWORD")
 
           SESSION_ID=$(echo $RESPONSE | jq -r '.sessionId')
@@ -43,7 +43,7 @@ jobs:
       - name: Validate VCM Package
         run: |
           curl -f -X POST \
-            "$VAULT_URL/api/v23.1/services/package/actions/validate" \
+            "$VAULT_URL/api/v26.1/services/package/actions/validate" \
             -H "Authorization: $VAULT_SESSION" \
             -F "file=@vcm/test-package.vpk"
 
