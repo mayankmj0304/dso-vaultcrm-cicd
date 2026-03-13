@@ -1,10 +1,9 @@
-name: Deploy Veeva Vault CRM Configurations
+name: Deploy Vault CRM Configurations - PR
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
       - develop
 
 jobs:
@@ -51,7 +50,7 @@ jobs:
       - name: Deploy VCM Package
         run: |
           curl -f -X POST \
-            "$VAULT_URL/api/v23.1/configuration/migration/deploy" \
+            "$VAULT_URL/api/v26.1/configuration/migration/deploy" \
             -H "Authorization: $VAULT_SESSION" \
             -F "file=@vcm/test-package.vpk"
 
