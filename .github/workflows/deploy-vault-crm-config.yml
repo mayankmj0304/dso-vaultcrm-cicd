@@ -46,6 +46,11 @@ jobs:
             "$VAULT_URL/api/v26.1/services/package/actions/validate" \
             -H "Authorization: $VAULT_SESSION" \
             -F "file=@vcm/test-package.vpk"
+        env:
+          VAULT_URL: ${{ secrets.VAULT_URL }}
+          VAULT_USERNAME: ${{ secrets.VAULT_USERNAME }}
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+
 
       - name: Deploy VCM Package
         run: |
@@ -53,6 +58,10 @@ jobs:
             "$VAULT_URL/api/v26.1/configuration/migration/deploy" \
             -H "Authorization: $VAULT_SESSION" \
             -F "file=@vcm/test-package.vpk"
+        env:
+          VAULT_URL: ${{ secrets.VAULT_URL }}
+          VAULT_USERNAME: ${{ secrets.VAULT_USERNAME }}
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
 
       - name: Deployment Complete
         run: echo "Vault CRM deployment completed successfully"
